@@ -1,10 +1,26 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/radius-project/radius/pkg/cli/clierrors"
+	corerp "github.com/radius-project/radius/pkg/corerp/api/v20231001preview"
+	"github.com/radius-project/radius/pkg/to"
 	"github.com/spf13/cobra"
+
+	v1 "github.com/radius-project/radius/pkg/armrpc/api/v1"
+	"github.com/radius-project/radius/pkg/cli"
+	"github.com/radius-project/radius/pkg/cli/clients"
+	"github.com/radius-project/radius/pkg/cli/clierrors"
+	"github.com/radius-project/radius/pkg/cli/cmd/commonflags"
+	"github.com/radius-project/radius/pkg/cli/cmd/env/namespace"
+	"github.com/radius-project/radius/pkg/cli/connections"
+	"github.com/radius-project/radius/pkg/cli/framework"
+	"github.com/radius-project/radius/pkg/cli/kubernetes"
+	"github.com/radius-project/radius/pkg/cli/output"
+	"github.com/radius-project/radius/pkg/cli/workspaces"
+	"github.com/radius-project/radius/pkg/ucp/resources"
+	resources_radius "github.com/radius-project/radius/pkg/ucp/resources/radius
 )
 
 // propertiesCmd represents the properties command

@@ -77,6 +77,7 @@ import (
 	"github.com/radius-project/radius/pkg/trace"
 	"go.opentelemetry.io/otel"
 
+	nj_props "github.com/nicolejms/radius/tree/nicolej/pkg/cli/cmd/nj/props"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/log"
@@ -303,6 +304,10 @@ func initSubCommands() {
 
 	uninstallKubernetesCmd, _ := uninstall_kubernetes.NewCommand(framework)
 	uninstallCmd.AddCommand(uninstallKubernetesCmd)
+
+	propCmd, _ := nj_props.NewCommand(framework)
+	propCmd.AddCommand(propCmd)
+
 }
 
 // The dance we do with config is kinda complex. We want commands to be able to retrieve a config (*viper.Viper)

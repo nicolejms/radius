@@ -245,3 +245,102 @@ func Test_Run(t *testing.T) {
 		require.Empty(t, outputSink.Writes)
 	})
 }
+
+func Test_GetResourceTypeSchema_AdditionalProperties(t *testing.T) {
+	tests := []struct {
+		name     string
+		schema   map[string]any
+		expected map[string]FieldSchema
+	}{
+		{
+			name: "additionalProperties with string type",
+			schema: map[string]any{
+				"properties": map[string]any{
+					"tags": map[string]any{
+						"type":        "object",
+						"description": "Resource tags",
+						"additionalProperties": map[string]any{
+							"type": "string",
+						},
+					},
+				},
+			},
+			expected: map[string]FieldSchema{
+				"tags": {
+					Name:        "tags",
+					Type:        "object (map of string)",
+					Description: "Resource tags",
+					IsRequired:  false,
+					IsReadOnly:  false,
+					Properties:  map[string]FieldSchema{},
+				},
+			},
+		},
+		{
+			name: "additionalProperties with reference",
+			schema: map[string]any{
+				"properties": map[string]any{
+					"env": map[string]any{
+						"type":        "object",
+						"description": "Environment variables",
+						"additionalProperties": map[string]any{
+							"$ref": "#/definitions/EnvironmentVariable",
+						},
+					},
+				},
+			},
+			expected: map[string]FieldSchema{
+				"env": {
+					Name:        "env",
+					Type:        "object (map)",
+					Description: "Environment variables",
+					IsRequired:  false,
+					IsReadOnly:  false,
+					Properties:  map[string]FieldSchema{},
+				},
+			},
+		},
+		{
+			name: "object with nested properties (no additionalProperties)",
+			schema: map[string]any{
+				"properties": map[string]any{
+					"database": map[string]any{
+						"type":        "object",
+						"description": "Database config",
+						"properties": map[string]any{
+							"host": map[string]any{
+								"type": "string",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]FieldSchema{
+				"database": {
+					Name:        "database",
+					Type:        "object",
+					Description: "Database config",
+					IsRequired:  false,
+					IsReadOnly:  false,
+					Properties: map[string]FieldSchema{
+						"host": {
+							Name:        "host",
+							Type:        "string",
+							Description: "",
+							IsRequired:  false,
+							IsReadOnly:  false,
+							Properties:  map[string]FieldSchema{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GetResourceTypeSchema(tt.schema)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}

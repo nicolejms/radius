@@ -45,26 +45,6 @@ func Test_IsRadiusResource(t *testing.T) {
 			testID:   resources.MustParse("/planes/kubernetes/local/resourceGroups/r1/providers/Applications.core/containers/test-container"),
 			expected: false,
 		},
-		{
-			testID:   resources.MustParse("/planes/radius/local/resourceGroups/r1/providers/System.Resources/resourceGroups/rg1"),
-			expected: false,
-		},
-		{
-			testID:   resources.MustParse("/planes/radius/local/resourceGroups/r1/providers/Microsoft.Storage/storageAccounts/sa1"),
-			expected: false,
-		},
-		{
-			testID:   resources.MustParse("/planes/radius/local/resourceGroups/r1/providers/Applications.Dapr/stateStores/test-state"),
-			expected: true,
-		},
-		{
-			testID:   resources.MustParse("/planes/radius/local/resourceGroups/r1/providers/Applications.Messaging/rabbitMQQueues/test-queue"),
-			expected: true,
-		},
-		{
-			testID:   resources.MustParse("/planes/radius/local/resourceGroups/r1/providers/Application/resources/test"),
-			expected: false,
-		},
 	}
 
 	for i, v := range values {

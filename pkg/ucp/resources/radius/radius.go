@@ -48,7 +48,7 @@ func IsRadiusResource(id resources.ID) bool {
 	if id.FindScope(PlaneTypeRadius) == "" || !id.IsResource() {
 		return false
 	}
-	
+
 	// Check if the provider namespace starts with "Applications."
 	return strings.HasPrefix(id.ProviderNamespace(), "Applications.")
 }

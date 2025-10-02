@@ -205,13 +205,26 @@ func GetResourceTypeSchema(schema map[string]any) map[string]FieldSchema {
 				isReadOnly = true
 			}
 
+			// Check for additionalProperties
+			nestedProperties := GetResourceTypeSchema(prop)
+			if additionalProps, ok := prop["additionalProperties"].(map[string]any); ok && len(nestedProperties) == 0 {
+				// If there's additionalProperties but no regular properties, it's a map type
+				// Update the type to reflect this
+				if additionalPropsType, ok := additionalProps["type"].(string); ok {
+					schemaType = fmt.Sprintf("object (map of %s)", additionalPropsType)
+				} else {
+					// If additionalProperties has a reference or nested object
+					schemaType = "object (map)"
+				}
+			}
+
 			fieldSchema[propertyName] = FieldSchema{
 				Name:        propertyName,
 				Type:        schemaType,
 				Description: description,
 				IsRequired:  isRequired,
 				IsReadOnly:  isReadOnly,
-				Properties:  GetResourceTypeSchema(prop),
+				Properties:  nestedProperties,
 			}
 		}
 	}

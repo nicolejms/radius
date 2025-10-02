@@ -16,7 +16,11 @@ limitations under the License.
 
 package radius
 
-import "github.com/radius-project/radius/pkg/ucp/resources"
+import (
+	"strings"
+
+	"github.com/radius-project/radius/pkg/ucp/resources"
+)
 
 const (
 	// PlaneTypeRadius defines the type name of the Radius plane.
@@ -39,6 +43,12 @@ const (
 )
 
 // IsRadiusResource checks if the given ID represents a resource type, and is defined in the Radius plane.
+// A Radius resource must be in the "radius" plane and use a provider namespace starting with "Applications.".
 func IsRadiusResource(id resources.ID) bool {
-	return id.FindScope("radius") != "" && id.IsResource()
+	if id.FindScope(PlaneTypeRadius) == "" || !id.IsResource() {
+		return false
+	}
+	
+	// Check if the provider namespace starts with "Applications."
+	return strings.HasPrefix(id.ProviderNamespace(), "Applications.")
 }

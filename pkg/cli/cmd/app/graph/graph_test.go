@@ -104,6 +104,36 @@ func Test_Validate(t *testing.T) {
 				Config:         configWithWorkspace,
 			},
 		},
+		{
+			Name:          "Graph command with mermaid format",
+			Input:         []string{"-a", "test-app", "--format", "mermaid"},
+			ExpectedValid: true,
+			ConfigHolder: framework.ConfigHolder{
+				ConfigFilePath: "",
+				Config:         configWithWorkspace,
+			},
+			ConfigureMocks: func(mocks radcli.ValidateMocks) {
+				mocks.ApplicationManagementClient.EXPECT().
+					GetApplication(gomock.Any(), "test-app").
+					Return(application, nil).
+					Times(1)
+			},
+			ValidateCallback: func(t *testing.T, r framework.Runner) {
+				runner := r.(*Runner)
+				require.Equal(t, "test-app", runner.ApplicationName)
+				require.Equal(t, "mermaid", runner.Format)
+			},
+		},
+		{
+			Name:          "Graph command with invalid format",
+			Input:         []string{"-a", "test-app", "--format", "invalid"},
+			ExpectedValid: false,
+			ConfigHolder: framework.ConfigHolder{
+				ConfigFilePath: "",
+				Config:         configWithWorkspace,
+			},
+			// No ConfigureMocks needed - validation fails before GetApplication is called
+		},
 	}
 	radcli.SharedValidateValidation(t, NewCommand, testcases)
 }
@@ -179,6 +209,7 @@ func Test_Run(t *testing.T) {
 
 		// Populated by Validate()
 		ApplicationName: "test-app",
+		Format:          "text",
 	}
 
 	err := runner.Run(context.Background())

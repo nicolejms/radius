@@ -32,13 +32,17 @@ func NewCommand(factory framework.Factory) (*cobra.Command, framework.Runner) {
 rad app graph
 
 # Show graph for specified application
-rad app graph my-application`,
+rad app graph my-application
+
+# Show graph in Mermaid format (GitHub-style)
+rad app graph --format mermaid`,
 		RunE: framework.RunCommand(runner),
 	}
 
 	commonflags.AddWorkspaceFlag(cmd)
 	commonflags.AddResourceGroupFlag(cmd)
 	commonflags.AddApplicationNameFlag(cmd)
+	cmd.Flags().StringP("format", "f", "text", "Output format (text or mermaid)")
 
 	return cmd, runner
 }
@@ -51,6 +55,7 @@ type Runner struct {
 
 	ApplicationName string
 	Workspace       *workspaces.Workspace
+	Format          string
 }
 
 // NewRunner creates a new instance of the `rad app graph` runner.
@@ -78,6 +83,15 @@ func (r *Runner) Validate(cmd *cobra.Command, args []string) error {
 	r.ApplicationName, err = cli.RequireApplicationArgs(cmd, args, *r.Workspace)
 	if err != nil {
 		return err
+	}
+
+	r.Format, err = cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+
+	if r.Format != "text" && r.Format != "mermaid" {
+		return clierrors.Message("Invalid format %q. Supported formats: text, mermaid", r.Format)
 	}
 
 	client, err := r.ConnectionFactory.CreateApplicationsManagementClient(cmd.Context(), *r.Workspace)
@@ -108,8 +122,15 @@ func (r *Runner) Run(ctx context.Context) error {
 		return err
 	}
 	graph := applicationGraphResponse.Resources
-	display := display(graph, r.ApplicationName)
-	r.Output.LogInfo(display)
+
+	var displayOutput string
+	if r.Format == "mermaid" {
+		displayOutput = displayMermaid(graph, r.ApplicationName)
+	} else {
+		displayOutput = display(graph, r.ApplicationName)
+	}
+
+	r.Output.LogInfo(displayOutput)
 
 	return nil
 }

@@ -135,3 +135,106 @@ func Test_ApplicationGraph(t *testing.T) {
 
 	test.Test(t)
 }
+
+func Test_ApplicationGraphWithRedisAndVolume(t *testing.T) {
+	// Deploy an app with a container, redis cache (via recipe), and a volume
+	template := "testdata/corerp-resources-container-redis-volume.bicep"
+	name := "corerp-app-redis-volume"
+	appNamespace := "corerp-app-redis-volume-ns"
+
+	test := rp.NewRPTest(t, name, []rp.TestStep{
+		{
+			Executor: step.NewDeployExecutor(
+				template,
+				testutil.GetMagpieImage(),
+				testutil.GetBicepRecipeRegistry(),
+				testutil.GetBicepRecipeVersion(),
+			),
+			RPResources: &validation.RPResourceSet{
+				Resources: []validation.RPResource{
+					{
+						Name: "corerp-app-redis-volume-env",
+						Type: validation.EnvironmentsResource,
+					},
+					{
+						Name: name,
+						Type: validation.ApplicationsResource,
+					},
+					{
+						Name: "redis-app-container",
+						Type: validation.ContainersResource,
+						App:  name,
+					},
+					{
+						Name: "redis-cache",
+						Type: validation.ExtendersResource,
+						App:  name,
+					},
+				},
+			},
+			K8sObjects: &validation.K8sObjectSet{
+				Namespaces: map[string][]validation.K8sObject{
+					appNamespace: {
+						validation.NewK8sPodForResource(name, "redis-app-container"),
+						validation.NewK8sServiceForResource(name, "redis-app-container").ValidateLabels(false),
+					},
+				},
+			},
+			PostStepVerify: func(ctx context.Context, t *testing.T, ct rp.RPTest) {
+				// Verify the application graph
+				options := rp.NewRPTestOptions(t)
+				client := options.ManagementClient
+				require.IsType(t, client, &clients.UCPApplicationsManagementClient{})
+
+				appManagementClient := client.(*clients.UCPApplicationsManagementClient)
+				appGraphClient, err := v20231001preview.NewApplicationsClient(appManagementClient.RootScope, &aztoken.AnonymousCredential{}, appManagementClient.ClientOptions)
+				require.NoError(t, err)
+
+				res, err := appGraphClient.GetGraph(ctx, name, map[string]any{}, nil)
+				require.NoError(t, err)
+
+				// Verify that the graph contains the expected resources
+				require.NotEmpty(t, res.Resources)
+				t.Logf("Graph contains %d resources", len(res.Resources))
+
+				// Sort by name for consistent comparison
+				sort.Slice(res.Resources, func(i, j int) bool {
+					return *res.Resources[i].Name < *res.Resources[j].Name
+				})
+
+				// Log the graph structure for debugging
+				for _, resource := range res.Resources {
+					t.Logf("Resource: %s (%s)", *resource.Name, *resource.Type)
+					t.Logf("  Connections: %d", len(resource.Connections))
+					for _, conn := range resource.Connections {
+						t.Logf("    - %s (%s)", *conn.ID, *conn.Direction)
+					}
+					t.Logf("  Output Resources: %d", len(resource.OutputResources))
+					for _, out := range resource.OutputResources {
+						t.Logf("    - %s (%s)", *out.Name, *out.Type)
+					}
+				}
+
+				// Verify specific resources exist in the graph
+				foundContainer := false
+				foundRedis := false
+
+				for _, resource := range res.Resources {
+					if *resource.Name == "redis-app-container" && *resource.Type == "Applications.Core/containers" {
+						foundContainer = true
+						// Container should have a connection to redis
+						require.NotEmpty(t, resource.Connections, "Container should have connections")
+					}
+					if *resource.Name == "redis-cache" && *resource.Type == "Applications.Core/extenders" {
+						foundRedis = true
+					}
+				}
+
+				require.True(t, foundContainer, "Container not found in graph")
+				require.True(t, foundRedis, "Redis cache not found in graph")
+			},
+		},
+	})
+
+	test.Test(t)
+}

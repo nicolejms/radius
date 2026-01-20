@@ -1,0 +1,19 @@
+Displaying application: corerp-app-redis-volume
+
+Name: redis-app-container (Applications.Core/containers)
+Connections:
+  redis-app-container -> redis-cache (Applications.Core/extenders)
+Resources:
+  redis-app-container (apps/Deployment)
+  redis-app-container (core/Service)
+  redis-app-container (core/ServiceAccount)
+  redis-app-container (rbac.authorization.k8s.io/Role)
+  redis-app-container (rbac.authorization.k8s.io/RoleBinding)
+
+Name: redis-cache (Applications.Core/extenders)
+Connections:
+  redis-app-container (Applications.Core/containers) -> redis-cache
+Resources:
+  redis-cache (apps/Deployment)
+  redis-cache (core/Service)
+

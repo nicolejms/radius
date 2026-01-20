@@ -1,0 +1,65 @@
+[
+  {
+    "id": "/planes/radius/local/resourcegroups/kind-radius/providers/Applications.Core/containers/redis-app-container",
+    "name": "redis-app-container",
+    "type": "Applications.Core/containers",
+    "provisioningState": "Succeeded",
+    "connections": [
+      {
+        "direction": "Outbound",
+        "id": "/planes/radius/local/resourcegroups/kind-radius/providers/Applications.Core/extenders/redis-cache"
+      }
+    ],
+    "outputResources": [
+      {
+        "id": "/planes/kubernetes/local/namespaces/corerp-app-redis-volume-ns/providers/apps/Deployment/redis-app-container",
+        "name": "redis-app-container",
+        "type": "apps/Deployment"
+      },
+      {
+        "id": "/planes/kubernetes/local/namespaces/corerp-app-redis-volume-ns/providers/core/Service/redis-app-container",
+        "name": "redis-app-container",
+        "type": "core/Service"
+      },
+      {
+        "id": "/planes/kubernetes/local/namespaces/corerp-app-redis-volume-ns/providers/core/ServiceAccount/redis-app-container",
+        "name": "redis-app-container",
+        "type": "core/ServiceAccount"
+      },
+      {
+        "id": "/planes/kubernetes/local/namespaces/corerp-app-redis-volume-ns/providers/rbac.authorization.k8s.io/Role/redis-app-container",
+        "name": "redis-app-container",
+        "type": "rbac.authorization.k8s.io/Role"
+      },
+      {
+        "id": "/planes/kubernetes/local/namespaces/corerp-app-redis-volume-ns/providers/rbac.authorization.k8s.io/RoleBinding/redis-app-container",
+        "name": "redis-app-container",
+        "type": "rbac.authorization.k8s.io/RoleBinding"
+      }
+    ]
+  },
+  {
+    "id": "/planes/radius/local/resourcegroups/kind-radius/providers/Applications.Core/extenders/redis-cache",
+    "name": "redis-cache",
+    "type": "Applications.Core/extenders",
+    "provisioningState": "Succeeded",
+    "connections": [
+      {
+        "direction": "Inbound",
+        "id": "/planes/radius/local/resourcegroups/kind-radius/providers/Applications.Core/containers/redis-app-container"
+      }
+    ],
+    "outputResources": [
+      {
+        "id": "/planes/kubernetes/local/namespaces/corerp-app-redis-volume-env/providers/apps/Deployment/redis-cache",
+        "name": "redis-cache",
+        "type": "apps/Deployment"
+      },
+      {
+        "id": "/planes/kubernetes/local/namespaces/corerp-app-redis-volume-env/providers/core/Service/redis-cache",
+        "name": "redis-cache",
+        "type": "core/Service"
+      }
+    ]
+  }
+]

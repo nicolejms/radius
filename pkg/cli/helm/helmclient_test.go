@@ -117,6 +117,11 @@ func TestHelmClient_UpgradeReusesValues(t *testing.T) {
 	// Note: This is a documentation test that validates the fix for issue #11218.
 	// The actual behavior is tested through integration tests in cluster_test.go,
 	// but this test documents the expected configuration of the upgrade client.
+	//
+	// We cannot easily test the ReuseValues field directly because:
+	// 1. It would require mocking Helm SDK internals (not recommended)
+	// 2. The field is set on the Helm action client, not exposed as a return value
+	// 3. Integration tests with real Helm operations verify the actual behavior
 	
 	client := &HelmClientImpl{}
 	

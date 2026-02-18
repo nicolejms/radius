@@ -163,7 +163,20 @@ func (dc *ResourceDeploymentClient) GetProviderConfigs(options clients.Deploymen
 }
 
 func (dc *ResourceDeploymentClient) createSummary(deployment *armresources.DeploymentExtended) (clients.DeploymentResult, error) {
-	if deployment.Properties == nil || deployment.Properties.OutputResources == nil {
+	if deployment.Properties == nil {
+		return clients.DeploymentResult{}, nil
+	}
+
+	// Check for deployment errors first
+	if deployment.Properties.Error != nil {
+		errDetails := clients.ConvertAzureErrorResponse(deployment.Properties.Error)
+		if errDetails != nil {
+			// Return the error details directly (it implements error interface)
+			return clients.DeploymentResult{}, errDetails
+		}
+	}
+
+	if deployment.Properties.OutputResources == nil {
 		return clients.DeploymentResult{}, nil
 	}
 

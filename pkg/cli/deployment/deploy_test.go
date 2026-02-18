@@ -19,8 +19,11 @@ package deployment
 import (
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	v1 "github.com/radius-project/radius/pkg/armrpc/api/v1"
 	"github.com/radius-project/radius/pkg/cli/clients"
 	sdkclients "github.com/radius-project/radius/pkg/sdk/clients"
+	"github.com/radius-project/radius/pkg/to"
 	"github.com/stretchr/testify/require"
 )
 
@@ -88,4 +91,93 @@ func Test_GetProviderConfigsWithAzProvider(t *testing.T) {
 
 	providerConfig := resourceDeploymentClient.GetProviderConfigs(options)
 	require.Equal(t, providerConfig, expectedConfig)
+}
+
+func Test_createSummary_WithDeploymentError(t *testing.T) {
+dc := &ResourceDeploymentClient{
+RadiusResourceGroup: "testrg",
+}
+
+t.Run("deployment with simple error", func(t *testing.T) {
+deployment := &armresources.DeploymentExtended{
+Properties: &armresources.DeploymentPropertiesExtended{
+Error: &armresources.ErrorResponse{
+Code:    to.Ptr("DeploymentFailed"),
+Message: to.Ptr("The deployment failed"),
+},
+},
+}
+
+result, err := dc.createSummary(deployment)
+require.Error(t, err)
+require.Empty(t, result.Resources)
+require.Empty(t, result.Outputs)
+
+// Verify error details
+errDetails, ok := err.(*v1.ErrorDetails)
+require.True(t, ok, "Expected error to be *v1.ErrorDetails")
+require.Equal(t, "DeploymentFailed", errDetails.Code)
+require.Equal(t, "The deployment failed", errDetails.Message)
+})
+
+t.Run("deployment with nested error details", func(t *testing.T) {
+deployment := &armresources.DeploymentExtended{
+Properties: &armresources.DeploymentPropertiesExtended{
+Error: &armresources.ErrorResponse{
+Code:    to.Ptr("DeploymentFailed"),
+Message: to.Ptr("The deployment failed"),
+Details: []*armresources.ErrorResponse{
+{
+Code:    to.Ptr("InvalidTemplate"),
+Message: to.Ptr("Template validation failed"),
+},
+},
+},
+},
+}
+
+result, err := dc.createSummary(deployment)
+require.Error(t, err)
+require.Empty(t, result.Resources)
+
+errDetails, ok := err.(*v1.ErrorDetails)
+require.True(t, ok)
+require.Len(t, errDetails.Details, 1)
+require.Equal(t, "InvalidTemplate", errDetails.Details[0].Code)
+require.Equal(t, "Template validation failed", errDetails.Details[0].Message)
+})
+
+t.Run("successful deployment without error", func(t *testing.T) {
+deployment := &armresources.DeploymentExtended{
+Properties: &armresources.DeploymentPropertiesExtended{
+OutputResources: []*armresources.ResourceReference{
+{
+ID: to.Ptr("/planes/radius/local/resourceGroups/testrg/providers/Applications.Core/containers/testcontainer"),
+},
+},
+Outputs: map[string]any{
+"output1": map[string]any{
+"type":  "string",
+"value": "test",
+},
+},
+},
+}
+
+result, err := dc.createSummary(deployment)
+require.NoError(t, err)
+require.Len(t, result.Resources, 1)
+require.Len(t, result.Outputs, 1)
+})
+
+t.Run("deployment with nil properties", func(t *testing.T) {
+deployment := &armresources.DeploymentExtended{
+Properties: nil,
+}
+
+result, err := dc.createSummary(deployment)
+require.NoError(t, err)
+require.Empty(t, result.Resources)
+require.Empty(t, result.Outputs)
+})
 }

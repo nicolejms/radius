@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	v1 "github.com/radius-project/radius/pkg/armrpc/api/v1"
 	"github.com/radius-project/radius/pkg/corerp/api/v20231001preview"
 )
@@ -68,4 +69,53 @@ func Is404Error(err error) bool {
 	}
 
 	return false
+}
+
+// ConvertAzureErrorResponse converts Azure SDK's ErrorResponse to Radius ErrorDetails.
+// This function handles nested error details recursively.
+func ConvertAzureErrorResponse(azErr *armresources.ErrorResponse) *v1.ErrorDetails {
+	if azErr == nil {
+		return nil
+	}
+
+	errDetails := &v1.ErrorDetails{}
+
+	// Convert basic fields
+	if azErr.Code != nil {
+		errDetails.Code = *azErr.Code
+	}
+	if azErr.Message != nil {
+		errDetails.Message = *azErr.Message
+	}
+	if azErr.Target != nil {
+		errDetails.Target = *azErr.Target
+	}
+
+	// Convert additional info if present
+	if len(azErr.AdditionalInfo) > 0 {
+		errDetails.AdditionalInfo = make([]*v1.ErrorAdditionalInfo, len(azErr.AdditionalInfo))
+		for i, info := range azErr.AdditionalInfo {
+			additionalInfo := &v1.ErrorAdditionalInfo{}
+			if info.Type != nil {
+				additionalInfo.Type = *info.Type
+			}
+			if info.Info != nil {
+				// Info is an 'any' type from Azure SDK, we need to handle it carefully
+				if infoMap, ok := info.Info.(map[string]any); ok {
+					additionalInfo.Info = infoMap
+				}
+			}
+			errDetails.AdditionalInfo[i] = additionalInfo
+		}
+	}
+
+	// Recursively convert nested error details
+	if len(azErr.Details) > 0 {
+		errDetails.Details = make([]*v1.ErrorDetails, len(azErr.Details))
+		for i, detail := range azErr.Details {
+			errDetails.Details[i] = ConvertAzureErrorResponse(detail)
+		}
+	}
+
+	return errDetails
 }

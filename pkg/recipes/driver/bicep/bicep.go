@@ -29,6 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"oras.land/oras-go/v2/registry/remote"
 
+	cliclient "github.com/radius-project/radius/pkg/cli/clients"
 	"github.com/radius-project/radius/pkg/components/metrics"
 	coredm "github.com/radius-project/radius/pkg/corerp/datamodel"
 	"github.com/radius-project/radius/pkg/portableresources/datamodel"
@@ -166,6 +167,14 @@ func (d *bicepDriver) Execute(ctx context.Context, opts driver.ExecuteOptions) (
 	resp, err := poller.PollUntilDone(ctx, &clients.PollUntilDoneOptions{Frequency: pollFrequency})
 	if err != nil {
 		return nil, recipes.NewRecipeError(recipes.RecipeDeploymentFailed, fmt.Sprintf("failed to deploy recipe %s of type %s", opts.BaseOptions.Recipe.Name, opts.BaseOptions.Definition.ResourceType), recipes_util.ExecutionError, recipes.GetErrorDetails(err))
+	}
+
+	// Check if deployment completed with errors in properties
+	if resp.Properties != nil && resp.Properties.Error != nil {
+		errDetails := cliclient.ConvertAzureErrorResponse(resp.Properties.Error)
+		if errDetails != nil {
+			return nil, recipes.NewRecipeError(recipes.RecipeDeploymentFailed, fmt.Sprintf("deployment of recipe %s failed: %s", opts.BaseOptions.Recipe.Name, errDetails.Message), recipes_util.ExecutionError, errDetails)
+		}
 	}
 
 	recipeResponse, err := d.prepareRecipeResponse(opts.BaseOptions.Definition.TemplatePath, resp.Properties.Outputs, resp.Properties.OutputResources)

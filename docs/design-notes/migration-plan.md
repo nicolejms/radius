@@ -36,20 +36,20 @@ docs/
 │   ├── cli/                               # CLI-specific designs
 │   │   ├── 2024-04-azure-workload-identity.md
 │   │   └── 2024-06-aws-irsa-support.md
-│   ├── compute/                            # Compute extensibility and recipe-backed core types
-│   │   ├── 2025-04-compute-extensibility.md
-│   │   ├── 2025-06-compute-extensibility-feature-spec.md
-│   │   ├── 2025-08-container-resource-type.md
-│   │   └── 2025-09-routes-resource-type.md
-│   ├── extensibility/                     # User-defined types and resource extensibility
+│   ├── extensibility/                     # Resource extensibility, UDTs, and compute extensibility
 │   │   ├── 2024-06-resource-extensibility-feature-spec.md
 │   │   ├── 2024-07-user-defined-types.md
 │   │   ├── 2024-07-user-defined-types-schema-design.md
 │   │   ├── 2024-08-resource-types-registration.md
-│   │   └── 2025-02-user-defined-resource-type-feature-spec.md
+│   │   ├── 2025-02-user-defined-resource-type-feature-spec.md
+│   │   ├── 2025-04-compute-extensibility.md
+│   │   ├── 2025-06-compute-extensibility-feature-spec.md
+│   │   ├── 2025-08-container-resource-type.md
+│   │   └── 2025-09-routes-resource-type.md
 │   ├── gitops/                            # GitOps integration designs
 │   │   ├── 2024-06-gitops-feature-spec.md
-│   │   └── 2024-10-deploymenttemplate-controller.md
+│   │   ├── 2024-10-deploymenttemplate-controller.md
+│   │   └── 2025-01-gitops-technical-design.md
 │   ├── guides/                            # Living design guidelines
 │   │   └── api-design-guidelines.md
 │   ├── recipes/                           # Recipe engine and providers
@@ -64,9 +64,10 @@ docs/
 │   │   ├── 2024-06-private-bicep-registries.md
 │   │   ├── 2025-08-recipe-packs.md
 │   │   └── 2025-09-container-recipe.md
-│   ├── security/                          # Threat models for current components
+│   ├── security/                          # Threat models and security designs
 │   │   ├── 2024-08-controller-component-threat-model.md
-│   │   └── 2024-11-ucp-component-threat-model.md
+│   │   ├── 2024-11-ucp-component-threat-model.md
+│   │   └── 2025-11-secrets-redactdata.md
 │   ├── tools/                             # Engineering tools and workflows
 │   │   ├── 2023-12-test-organization.md
 │   │   └── 2025-03-workflow-changes.md
@@ -82,9 +83,8 @@ docs/
 | Change | Rationale |
 |--------|-----------|
 | Group by topic, not by original repo directory | The original repo mixed concerns (e.g., `resources/` contained both Applications.Core and recipe designs). Topic-based grouping makes documents easier to find. |
-| Separate `compute/` directory | Compute extensibility and recipe-backed core resource types (containers, routes) form a distinct feature area with its own design, feature spec, and resource type definitions. |
-| Separate `security/` directory | Threat models are cross-cutting concerns that benefit from being co-located rather than scattered across architecture/ or component-specific directories. |
-| Separate `extensibility/` directory | User-defined types and resource extensibility are a major feature area with multiple related design documents that form a cohesive set. |
+| Separate `security/` directory | Threat models and security designs (including sensitive data redaction) are cross-cutting concerns that benefit from being co-located rather than scattered across architecture/ or component-specific directories. |
+| Separate `extensibility/` directory | User-defined types, resource extensibility, and compute extensibility (recipe-backed core resource types) are a cohesive feature area covering how Radius supports custom and platform-specific resource types. |
 | Separate `gitops/` directory | GitOps spans the DeploymentTemplate controller and the overall feature spec; grouping them clarifies the feature area. |
 | `guides/` for living documents | API design guidelines and similar living documents are distinct from point-in-time design notes. |
 | Keep existing `docs/architecture/` intact | The existing architecture docs (`deployment-engine.md`, `state-persistence.md`) are current reference documentation, not historical design notes. |
@@ -109,16 +109,7 @@ docs/
 | [`cli/2024-04-azure-workload-identity.md`](https://github.com/radius-project/design-notes/blob/main/cli/2024-04-azure-workload-identity.md) | Enables Azure workload identity (federated identity) for Radius to deploy and manage Azure resources without client secrets. Status: **Approved**. | Azure credential management exists in `pkg/ucp/credentials/`, `pkg/cli/azure/`. |
 | [`cli/2024-06-04-aws-irsa-support.md`](https://github.com/radius-project/design-notes/blob/main/cli/2024-06-04-aws-irsa-support.md) | Enables AWS IRSA (IAM Roles for Service Accounts) for Radius to deploy and manage AWS resources without static access keys. | AWS credential management exists in `pkg/ucp/credentials/`, `pkg/cli/aws/`. |
 
-### Compute Extensibility (4 documents)
-
-| Document | Summary | Evidence of Implementation |
-|----------|---------|---------------------------|
-| [`architecture/2025-04-compute-extensibility.md`](https://github.com/radius-project/design-notes/blob/main/architecture/2025-04-compute-extensibility.md) | Designs extensible support for multiple compute platforms through recipes rather than hard-coded support; core resource types (`containers`, `gateways`, `secretStores`) allow recipe registration. | `Radius.Compute/containers` and routes are defined in `deploy/manifest/built-in-providers/dev/radius_compute.yaml`; recipe-backed provisioning is active. |
-| [`features/2025-06-compute-extensibility-feature-spec.md`](https://github.com/radius-project/design-notes/blob/main/features/2025-06-compute-extensibility-feature-spec.md) | Feature spec for recipe-backed core resource types, decoupling Radius core logic from platform-specific provisioning code. | Implemented via `Radius.Compute/containers`, `Radius.Compute/routes`, and `Radius.Compute/persistentVolumes` in the compute provider manifest. |
-| [`features/2025-08-29-container-resource-type.md`](https://github.com/radius-project/design-notes/blob/main/features/2025-08-29-container-resource-type.md) | Defines version two of the Containers Resource Type (`Radius.Compute/containers`) with multi-container support, Kubernetes-first design, and recipe-backed provisioning. | Full schema in `deploy/manifest/built-in-providers/dev/radius_compute.yaml`; environment recipe parameters reference `Radius.Compute/containers`. |
-| [`features/2025-09-02-routes-resource-type.md`](https://github.com/radius-project/design-notes/blob/main/features/2025-09-02-routes-resource-type.md) | Proposes the Routes resource type replacing Gateways, removing the Contour dependency and enabling recipe-backed L7 ingress. | Routes defined in `deploy/manifest/built-in-providers/dev/radius_compute.yaml` as a recipe-backed resource type. |
-
-### Extensibility (5 documents)
+### Extensibility (9 documents)
 
 | Document | Summary | Evidence of Implementation |
 |----------|---------|---------------------------|
@@ -127,13 +118,18 @@ docs/
 | [`architecture/2024-07-user-defned-types-schema-design.md`](https://github.com/radius-project/design-notes/blob/main/architecture/2024-07-user-defned-types-schema-design.md) | Defines the OpenAPI subset supported for UDT schemas and validation rules. | Schema validation for resource type manifests exists in the codebase. |
 | [`architecture/2024-08-resource-types-registration.md`](https://github.com/radius-project/design-notes/blob/main/architecture/2024-08-resource-types-registration.md) | Detailed API design for resource type registration (resource providers, types, locations, API versions). | Registration APIs exist in UCP (`pkg/ucp/`); `rad resource-type create` CLI command exists. |
 | [`features/2025-02-user-defined-resource-type-feature-spec.md`](https://github.com/radius-project/design-notes/blob/main/features/2025-02-user-defined-resource-type-feature-spec.md) | Comprehensive feature spec for user-defined resource types, covering the full user experience. | UDT feature is implemented and actively used via `pkg/dynamicrp/` and `pkg/cli/manifest/`. |
+| [`architecture/2025-04-compute-extensibility.md`](https://github.com/radius-project/design-notes/blob/main/architecture/2025-04-compute-extensibility.md) | Designs extensible support for multiple compute platforms through recipes rather than hard-coded support; core resource types (`containers`, `gateways`, `secretStores`) allow recipe registration. | `Radius.Compute/containers` and routes are defined in `deploy/manifest/built-in-providers/dev/radius_compute.yaml`; recipe-backed provisioning is active. |
+| [`features/2025-06-compute-extensibility-feature-spec.md`](https://github.com/radius-project/design-notes/blob/main/features/2025-06-compute-extensibility-feature-spec.md) | Feature spec for recipe-backed core resource types, decoupling Radius core logic from platform-specific provisioning code. | Implemented via `Radius.Compute/containers`, `Radius.Compute/routes`, and `Radius.Compute/persistentVolumes` in the compute provider manifest. |
+| [`features/2025-08-29-container-resource-type.md`](https://github.com/radius-project/design-notes/blob/main/features/2025-08-29-container-resource-type.md) | Defines version two of the Containers Resource Type (`Radius.Compute/containers`) with multi-container support, Kubernetes-first design, and recipe-backed provisioning. | Full schema in `deploy/manifest/built-in-providers/dev/radius_compute.yaml`; environment recipe parameters reference `Radius.Compute/containers`. |
+| [`features/2025-09-02-routes-resource-type.md`](https://github.com/radius-project/design-notes/blob/main/features/2025-09-02-routes-resource-type.md) | Proposes the Routes resource type replacing Gateways, removing the Contour dependency and enabling recipe-backed L7 ingress. | Routes defined in `deploy/manifest/built-in-providers/dev/radius_compute.yaml` as a recipe-backed resource type. |
 
-### GitOps (2 documents)
+### GitOps (3 documents)
 
 | Document | Summary | Evidence of Implementation |
 |----------|---------|---------------------------|
 | [`features/2024-06-gitops-feature-spec.md`](https://github.com/radius-project/design-notes/blob/main/features/2024-06-gitops-feature-spec.md) | Feature spec for integrating Radius with GitOps tools (Flux, ArgoCD) via the DeploymentTemplate controller. | DeploymentTemplate CRD and controller exist in `pkg/controller/reconciler/`. |
 | [`architecture/2024-10-deploymenttemplate-controller.md`](https://github.com/radius-project/design-notes/blob/main/architecture/2024-10-deploymenttemplate-controller.md) | Design for the DeploymentTemplate Kubernetes controller that deploys Bicep manifests using K8s tooling. | Controller is implemented in `pkg/controller/reconciler/`; CRDs are defined. |
+| [`tools/2025-01-gitops-technical-design.md`](https://github.com/radius-project/design-notes/blob/main/tools/2025-01-gitops-technical-design.md) | Technical design for the Radius Flux Controller that watches Flux GitRepository sources and reconciles Bicep deployments. | Flux controller implemented in `pkg/controller/reconciler/flux_controller.go` with GitRepository predicate in `pkg/controller/reconciler/flux_gitrepository_predicate.go`; functional tests in `test/functional-portable/kubernetes/noncloud/flux_test.go`. |
 
 ### Recipes (11 documents)
 
@@ -151,12 +147,13 @@ docs/
 | [`recipe/2025-08-recipe-packs.md`](https://github.com/radius-project/design-notes/blob/main/recipe/2025-08-recipe-packs.md) | Designs Recipe Packs as a first-class resource type, enabling bundling of multiple recipe selections into a reusable unit referenced by environments. | RecipePack TypeSpec in `typespec/Radius.Core/recipePacks.tsp`; controller in `pkg/corerp/frontend/controller/recipepacks/`. |
 | [`recipe/2025-09-container.md`](https://github.com/radius-project/design-notes/blob/main/recipe/2025-09-container.md) | Replaces the imperative Go renderer chain for containers with a Bicep recipe for the `Radius.Compute/containers` resource type. | `Radius.Compute/containers` is recipe-backed in `deploy/manifest/built-in-providers/dev/radius_compute.yaml`. |
 
-### Security (2 documents)
+### Security (3 documents)
 
 | Document | Summary | Evidence of Implementation |
 |----------|---------|---------------------------|
 | [`architecture/2024-08-controller-component-threat-model.md`](https://github.com/radius-project/design-notes/blob/main/architecture/2024-08-controller-component-threat-model.md) | Threat model for the Radius Controller component (Recipe and Deployment controllers, validating webhook). | Controller exists at `pkg/controller/`, `cmd/controller/`. |
 | [`architecture/2024-11-ucp-component-threat-model.md`](https://github.com/radius-project/design-notes/blob/main/architecture/2024-11-ucp-component-threat-model.md) | Threat model for the UCP component (proxy, credential storage, resource routing). | UCP exists at `pkg/ucp/`, `cmd/ucpd/`. |
+| [`resources/2025-11-11-secrets-redactdata.md`](https://github.com/radius-project/design-notes/blob/main/resources/2025-11-11-secrets-redactdata.md) | Designs sensitive data redaction for `Radius.Security/secrets`, ensuring secret values are not exposed through API responses or logs. | `Radius.Security/secrets` resource type defined in `deploy/manifest/built-in-providers/dev/radius_security.yaml` with full schema for secret data storage and referencing. |
 
 ### Tools (2 documents)
 
@@ -177,13 +174,13 @@ docs/
 |----------|---------|---------------------------|
 | [`guide/api-design-guidelines.md`](https://github.com/radius-project/design-notes/blob/main/guide/api-design-guidelines.md) | Prescriptive API design guidelines for Radius contributors, currently focused on secrets handling. Living document. | Guidelines are actively referenced in design reviews and API development. |
 
-**Total: 34 documents recommended for migration.**
+**Total: 36 documents recommended for migration.**
 
 ---
 
 ## Documents NOT Recommended for Migration
 
-### Aspirational / Not Yet Implemented (10 documents)
+### Aspirational / Not Yet Implemented (8 documents)
 
 These documents describe future plans with no corresponding implementation in the current codebase:
 
@@ -197,10 +194,8 @@ These documents describe future plans with no corresponding implementation in th
 | `features/2025-07-23-radius-configuration-ux.md` | Configuration UX modeling configs as resources is not implemented. |
 | `features/2025-07-radius-resource-types-contribution.md` | Community contribution model for resource types is not implemented. |
 | `features/2025-08-14-terraform-bicep-settings.md` | Terraform/Bicep settings refactoring feature spec is not implemented. |
-| `resources/2025-11-11-secrets-redactdata.md` | `Radius.Security/secrets` sensitive data redaction is not implemented. |
-| `tools/2025-01-gitops-technical-design.md` | Radius Flux Controller is not implemented; no Flux-related code exists. |
 
-### Applications.Core Related (11 documents)
+### Applications.Core Related (12 documents)
 
 These documents are about `Applications.Core/*` or other `Applications.*` resource types managed by the Applications RP:
 
@@ -241,4 +236,4 @@ These documents are about `Applications.Core/*` or other `Applications.*` resour
 |----------|---------------------|
 | `bicep/README.md` | Directory contains only a README with no design documents. |
 
-**Total: 28 documents/items not recommended for migration.**
+**Total: 27 documents/items not recommended for migration.**

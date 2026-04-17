@@ -1,6 +1,6 @@
 # Sprint Plan: Repo Radius & Application Graph — GitHub Project 23
 
-**Date:** 2026-04-17  
+**Date:** 2026-04-17 (last updated: 2026-04-17)  
 **Planning horizon:** April 2026 – July 2026 (5 × 2-week sprints)  
 **Team capacity:** 7 developers per sprint  
 **Source backlog:** Issues associated with [radius-project/radius Project 23](https://github.com/orgs/radius-project/projects/23)  
@@ -16,9 +16,9 @@
 4. [Sprint Plan](#4-sprint-plan)
    - [Sprint 1 — Foundations](#sprint-1--foundations-apr-21--may-2-2026)
    - [Sprint 2 — Repo Radius Usable Loop](#sprint-2--repo-radius-usable-loop-may-4--may-15-2026)
-   - [Sprint 3 — App Graph Preview Path](#sprint-3--app-graph-preview-path-may-18--may-29-2026)
+   - [Sprint 3 — App Graph Preview Path + Extensibility Foundation](#sprint-3--app-graph-preview-path--extensibility-foundation-may-18--may-29-2026)
    - [Sprint 4 — Deployments UX & Deployed Graph](#sprint-4--deployments-ux--deployed-graph-jun-1--jun-12-2026)
-   - [Sprint 5 — Hardening, Performance & Compliance](#sprint-5--hardening-performance--compliance-jun-15--jun-26-2026)
+   - [Sprint 5 — Hardening, Performance, Compliance & Extensibility E2E](#sprint-5--hardening-performance-compliance--extensibility-e2e-jun-15--jun-26-2026)
 5. [Risks and Mitigations](#5-risks-and-mitigations)
 6. [Progress Tracking](#6-progress-tracking)
 7. [Out of Scope / Deferred](#7-out-of-scope--deferred)
@@ -27,10 +27,12 @@
 
 ## 1. Overview
 
-This document is a **sprint-by-sprint execution plan** for the features and improvements tracked in [radius-project/radius Project 23](https://github.com/orgs/radius-project/projects/23). The two primary themes are:
+This document is a **sprint-by-sprint execution plan** for the features and improvements tracked in [radius-project/radius Project 23](https://github.com/orgs/radius-project/projects/23). The four primary themes are:
 
 - **Repo Radius** — running Radius entirely inside a GitHub Actions runner (ephemeral, persistent, lifecycle-aware), powered by a cloud-or-git-backed state store.
 - **Application Graph in GitHub** — visualizing the app topology from `app.bicep` and live deployments directly inside the GitHub UI via a browser extension/app.
+- **Compute Extensibility** (led by @kachawla / Lakshmi) — re-implementing core Radius types as Radius Resource Types (RRTs), integrating them into the runtime, and establishing a community contribution path for recipes and Recipe Packs.
+- **Engineering Excellence** (led by @DariuszPorowski / Dariusz) — migrating the release lifecycle to GoReleaser, standardizing linting/formatting across the codebase, adopting merge queues, and improving contributor developer experience.
 
 Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards-compatibility (preview flag, deprecation warnings), infrastructure-as-code settings lifecycle, and CI/workflow health.
 
@@ -185,6 +187,40 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 
 ---
 
+### Epic J — Compute Extensibility (led by @kachawla / Lakshmi)
+
+**Goal:** Core Radius types are re-implemented as composable, versioned Radius Resource Types (RRTs) driven by recipes; a community contribution path exists for extending the core application model.
+
+> **Design reference:** [radius-project/roadmap#73](https://github.com/radius-project/roadmap/issues/73)
+
+| Slice | Issue(s) | Description | Size |
+|---|---|---|---|
+| J1 | [#9829](https://github.com/radius-project/radius/issues/9829) | RRT implementation of core application model types (`containers`, `gateways`, `secretStores`) | L |
+| J2 | [#9830](https://github.com/radius-project/radius/issues/9830) | Integrate new core RRTs into Radius runtime (new `environments` API version, remove hard-coded `compute`) | L |
+| J3 | [#9831](https://github.com/radius-project/radius/issues/9831) | Default Recipes for Kubernetes and ACI | M |
+| J4 | [#9921](https://github.com/radius-project/radius/issues/9921) | Create Radius Environments for specific platforms with default recipes | M |
+| J5 | [#11108](https://github.com/radius-project/radius/issues/11108) | Automatically sync core resource manifests | M |
+| J6 | [#11216](https://github.com/radius-project/radius/issues/11216) | End-to-end tests for automatically registered resource types | M |
+| J7 | [#11255](https://github.com/radius-project/radius/issues/11255) | Investigate automatically publishing Bicep extensions for core types | S |
+| J8 | [#9836](https://github.com/radius-project/radius/issues/9836) | Migration path, documentation, and community contribution process for RRTs | M |
+| J9 | [#10384](https://github.com/radius-project/radius/issues/10384) | Remove `experimentalFeaturesEnabled` requirement for extensibility in `bicepconfig.json` | S |
+
+---
+
+### Epic K — Engineering Excellence (led by @DariuszPorowski / Dariusz)
+
+**Goal:** Release automation is modern and maintainable (GoReleaser-based); linting/formatting is consistent across all file types; merge queue is adopted; contributor tooling is unified across platforms; repository health is measurable.
+
+> **Design reference:** [radius-project/design-notes — GoReleaser Release Lifecycle](https://github.com/radius-project/design-notes/blob/main/tools/2026-03-goreleaser-release-lifecycle.md) (authored by Dariusz Porowski, merged April 2026)
+
+| Slice | Issue(s) | Description | Size |
+|---|---|---|---|
+| K1 | [design-notes/tools/2026-03-goreleaser-release-lifecycle.md](https://github.com/radius-project/design-notes/blob/main/tools/2026-03-goreleaser-release-lifecycle.md) | **GoReleaser migration** — replace custom Makefile/shell/Python release logic with a declarative `.goreleaser.yaml`; tag-driven release flow; multi-arch images; auto-changelog | L |
+| K2 | [#10829](https://github.com/radius-project/radius/issues/10829) | Expand and standardize linting/formatting across all file types (Markdown, Bash, Python, YAML, GitHub workflows, Bicep, Terraform, etc.) | M |
+| K3 | [#10830](https://github.com/radius-project/radius/issues/10830) | Unify cross-platform tooling and environment setup across CI, dev containers, Codespaces, and local dev | M |
+| K4 | [#10843](https://github.com/radius-project/radius/issues/10843) | Adopt GitHub merge queues for `main` branch to increase PR throughput | S |
+| K5 | [#10853](https://github.com/radius-project/radius/issues/10853) | Implement repository engagement and review metrics dashboard | M |
+
 ## 4. Sprint Plan
 
 ### Capacity model
@@ -216,6 +252,8 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 | 9 | G2 | Design doc: `Radius.Core/Security` resource for settings ([#11306](https://github.com/radius-project/radius/issues/11306)) | Design; blocks G3, F8 | S |
 | 10 | B5 | Update `app.bicep` to new namespace ([#11488](https://github.com/radius-project/radius/issues/11488)) | Small; needed to unblock tests | S |
 | 11 | H2 (start) | **AutoRest migration spike**: inventory all AutoRest usages and produce a migration plan before the July 1 deadline | Risk mitigation | M |
+| 12 | K1 (spike) | **GoReleaser design review**: review the [GoReleaser release lifecycle design](https://github.com/radius-project/design-notes/blob/main/tools/2026-03-goreleaser-release-lifecycle.md); identify implementation tasks and any gaps for the fork | Owned by Dariusz; unblocks K1 implementation in S2 | S |
+| 13 | K4 | Adopt GitHub merge queues for `main` branch ([#10843](https://github.com/radius-project/radius/issues/10843)) | Low-effort, high-impact; improves PR throughput immediately | S |
 
 #### Exit criteria — Sprint 1
 
@@ -226,6 +264,8 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 - [ ] **Deprecation warning:** `rad deploy` or `rad run` emits a visible, actionable deprecation warning when old `Applications.*` types are detected
 - [ ] **CI green** in `nicolejms/radius` including updated stale-PR workflow
 - [ ] **AutoRest spike output:** A markdown doc listing all files/generators that depend on AutoRest, proposed migration path (e.g., to TypeSpec-based generation), and owners. Shared with team before Sprint 2 planning
+- [ ] **GoReleaser design review complete:** Implementation task list produced; gap analysis done; Sprint 2 implementation scope confirmed with Dariusz
+- [ ] **Merge queue enabled:** `main` branch merge queue is active in `nicolejms/radius`; documented in `CONTRIBUTING.md`
 - [ ] App graph schema draft circulated for team review
 
 #### Sprint 1 dependencies
@@ -237,11 +277,11 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 
 ### Sprint 2 — Repo Radius Usable Loop (May 4 – May 15, 2026)
 
-**Theme:** Make Repo Radius "repeatable": start, stop, persist state, and store artifacts in Git and cloud backends.
+**Theme:** Make Repo Radius "repeatable": start, stop, persist state, and store artifacts in Git and cloud backends. Begin Compute Extensibility RRT work. Start GoReleaser migration.
 
-**Sprint goal:** By end of Sprint 2, `rad startup` → work → `rad shutdown` → restart is functional with both Git and Cloud storage backends. Test suite is updated for new types.
+**Sprint goal:** By end of Sprint 2, `rad startup` → work → `rad shutdown` → restart is functional with both Git and Cloud storage backends. RRT schemas for core types are defined. GoReleaser produces a valid snapshot build.
 
-#### Committed work (≈11.5 dev-weeks)
+#### Committed work (≈12 dev-weeks)
 
 | # | Slice | Description | Owner notes | Size |
 |---|---|---|---|---|
@@ -255,6 +295,8 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 | 8 | H5 | Local functional tests infrastructure ([#11320](https://github.com/radius-project/radius/issues/11320)) | Developer experience | M |
 | 9 | H6 | E2E developer flow refinements ([#11321](https://github.com/radius-project/radius/issues/11321)) | Paper-cuts from Sprint 1 work | M |
 | 10 | H2 (cont.) | AutoRest migration — begin file-by-file migration for highest-risk generators | Critical path to July 1 deadline | M |
+| 11 | K1 (impl) | **GoReleaser migration** — implement `.goreleaser.yaml`; integrate into CI; snapshot builds working | Owned by Dariusz; replaces custom Makefile/shell release logic | L |
+| 12 | J1 (start) | Begin RRT implementation for `containers`, `gateways`, `secretStores` — schema + CRUD skeleton | Owned by Lakshmi; blocks J2 | M |
 
 #### Exit criteria — Sprint 2
 
@@ -266,16 +308,18 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 - [ ] **Test suite:** Test files updated for new types; no test regressions
 - [ ] **Local functional tests:** Developers can run the functional test suite locally without a full cloud environment (at minimum a documented subset)
 - [ ] **AutoRest migration:** ≥50% of identified AutoRest-dependent generators migrated or migration PRs open for review
+- [ ] **GoReleaser snapshot build:** `goreleaser release --snapshot` succeeds in CI; produces correct CLI archives and container image manifests; documented in release runbook
+- [ ] **RRT skeleton:** `Applications.Core/containers@<preview-version>` resource type is registered in the dynamic-RP and can be created/read via API (even if recipe execution is a stub)
 
 ---
 
-### Sprint 3 — App Graph Preview Path (May 18 – May 29, 2026)
+### Sprint 3 — App Graph Preview Path + Extensibility Foundation (May 18 – May 29, 2026)
 
-**Theme:** Produce and render the preview (pre-deploy) application graph inside the GitHub UI.
+**Theme:** Produce and render the preview (pre-deploy) application graph inside the GitHub UI. Complete RRT CRUD and integration. Standardize codebase linting.
 
-**Sprint goal:** By end of Sprint 3, running `rad deploy --preview` produces a schema-valid graph artifact for a sample app, and the GUI extension can load and display it.
+**Sprint goal:** By end of Sprint 3, running `rad deploy --preview` produces a schema-valid graph artifact, the GUI extension can render it, and the three core RRTs are fully CRUD-capable with recipe support.
 
-#### Committed work (≈11.5 dev-weeks)
+#### Committed work (≈12 dev-weeks)
 
 | # | Slice | Description | Owner notes | Size |
 |---|---|---|---|---|
@@ -288,6 +332,8 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 | 7 | A6 | PR review state serialization ([#11493](https://github.com/radius-project/radius/issues/11493)) | Needed for Repo Radius in PRs | S |
 | 8 | F8 | Implement secrets changes for `bicepSettings` / `terraformSettings` ([#11307](https://github.com/radius-project/radius/issues/11307)) | Depends on G2 | M |
 | 9 | H2 (cont.) | Complete AutoRest migration for all identified generators | Hard deadline: July 1, 2026 | M |
+| 10 | J1 (cont.) + J2 (start) | Complete RRT CRUD for core types; begin integrating new environment API version ([#9830](https://github.com/radius-project/radius/issues/9830)) | Owned by Lakshmi | M |
+| 11 | K2 | Expand and standardize linting/formatting across codebase ([#10829](https://github.com/radius-project/radius/issues/10829)) — Phase 1: enable checks locally; no CI enforcement yet | Owned by Dariusz | M |
 
 #### Exit criteria — Sprint 3
 
@@ -298,6 +344,9 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 - [ ] **Property-reference bug fixed:** A regression test confirms that resources referenced as properties (not explicit connections) appear as linked nodes in the graph
 - [ ] **`rad app *` preview:** `rad app graph --preview` and `rad app list --preview` are consistent with the preview contract established in Sprint 1
 - [ ] **AutoRest migration:** All identified generators migrated or replacement PRs merged; CI no longer depends on deprecated AutoRest tooling
+- [ ] **RRT CRUD complete:** All three core RRTs (`containers`, `gateways`, `secretStores`) support full CRUD via the dynamic-RP; unit and integration tests pass
+- [ ] **New environment API:** `Applications.Core/environments@<preview-version>` is deployable; applications can register recipes to it; old `compute` property is absent from the new version
+- [ ] **Linting Phase 1:** All new linting tools run locally via `make lint`; VS Code integration documented; no CI enforcement yet (to allow profiling before enforcing)
 
 ---
 
@@ -307,7 +356,7 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 
 **Sprint goal:** By end of Sprint 4, a developer can click "Deploy" in the GitHub UI, the deployment is dispatched via the GitHub Deployments API, and the resulting deployed graph is visible in the extension.
 
-#### Committed work (≈11.5 dev-weeks)
+#### Committed work (≈12 dev-weeks)
 
 | # | Slice | Description | Owner notes | Size |
 |---|---|---|---|---|
@@ -319,6 +368,9 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 | 6 | D5 | Radius integration with GitHub Deployments API ([#11660](https://github.com/radius-project/radius/issues/11660)) | Depends on D1 | L |
 | 7 | D6 | Radius deploys to K8s cluster defined on the environment ([#11657](https://github.com/radius-project/radius/issues/11657)) | Depends on D5 | M |
 | 8 | H3 | Automate publishing extensions ([#11487](https://github.com/radius-project/radius/issues/11487)) | CI; needed before demo | M |
+| 9 | J3 | Default Recipes for Kubernetes and ACI ([#9831](https://github.com/radius-project/radius/issues/9831)) | Owned by Lakshmi; depends on J1/J2 | M |
+| 10 | J4 | Create Radius Environments for specific platforms with default recipes ([#9921](https://github.com/radius-project/radius/issues/9921)) | Owned by Lakshmi; depends on J3 | M |
+| 11 | K3 | Unify cross-platform tooling setup across CI, dev containers, Codespaces, local dev ([#10830](https://github.com/radius-project/radius/issues/10830)) | Owned by Dariusz | M |
 
 #### Exit criteria — Sprint 4
 
@@ -329,29 +381,37 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 - [ ] **GitHub Deployments integration:** Radius creates and updates a GitHub Deployment record on workflow dispatch; deployment status (in-progress / success / failure) is visible in the GitHub repo's Deployments section
 - [ ] **K8s from environment:** `rad deploy` correctly targets the Kubernetes cluster referenced in the Radius environment definition (not hardcoded)
 - [ ] **Extension publishing:** Extension build is automated in CI; a tagged release produces a distributable artifact without manual steps
+- [ ] **Default Recipes:** Kubernetes and ACI default recipes for core RRTs are published to the GHCR registry and linked from the default platform environment
+- [ ] **Platform environments:** At least one platform-specific environment definition (e.g., Kubernetes) can be created using the new extensible model
+- [ ] **Unified tooling:** A single `mise` (or equivalent) config file drives tool installation on CI, dev containers, and local dev for all major platforms
 - [ ] **Happy-path demo script** documented (steps + expected screenshots) and successfully executed against the fork environment
 
 ---
 
-### Sprint 5 — Hardening, Performance & Compliance (Jun 15 – Jun 26, 2026)
+### Sprint 5 — Hardening, Performance, Compliance & Extensibility E2E (Jun 15 – Jun 26, 2026)
 
-**Theme:** Make everything reliable, fast, and secure in CI environments; complete compliance items.
+**Theme:** Make everything reliable, fast, and secure in CI environments; complete compliance items; ship extensibility E2E tests and community contribution path; complete GoReleaser production release.
 
-**Sprint goal:** By end of Sprint 5, performance benchmarks in GitHub runners are published, the encryption stack is merged, the SBOM is generated in CI, and backlog deferred items are closed out.
+**Sprint goal:** By end of Sprint 5, performance benchmarks in GitHub runners are published, the encryption stack is merged, the SBOM is generated via GoReleaser in CI, extensibility E2E tests pass, and the community contribution process for RRTs is documented.
 
-#### Committed work (≈11.5 dev-weeks)
+#### Committed work (≈12 dev-weeks)
 
 | # | Slice | Description | Owner notes | Size |
 |---|---|---|---|---|
 | 1 | E1 | Persist Radius data store between executions ([#11655](https://github.com/radius-project/radius/issues/11655)) | Depends on A1, A2 | M |
 | 2 | E2 | Optimize Radius performance in GH action runner ([#11659](https://github.com/radius-project/radius/issues/11659)) | Depends on E1 | M |
 | 3 | A5 | Background Cleanup Job ([#11367](https://github.com/radius-project/radius/issues/11367)) | Depends on A1 | S |
-| 4 | F3 | Add SBOM ([#11446](https://github.com/radius-project/radius/issues/11446)) | Compliance | S |
+| 4 | F3 | Add SBOM ([#11446](https://github.com/radius-project/radius/issues/11446)) | Delivered via GoReleaser K1 | S |
 | 5 | F4 | Security: data store and queue hardening for UCP ([#11273](https://github.com/radius-project/radius/issues/11273)) | Security | M |
 | 6 | F5 | Security: Add Kubernetes NetworkPolicies ([#11271](https://github.com/radius-project/radius/issues/11271)) | Security | M |
 | 7 | F7 | Backend encryption updates ([#11095](https://github.com/radius-project/radius/issues/11095)) | Security | M |
 | 8 | H4 | Agentic workflow to keep architecture docs up to date ([#11424](https://github.com/radius-project/radius/issues/11424)) | DevEx | M |
 | 9 | I1/I2 | Create and record end-to-end demo ([#11331](https://github.com/radius-project/radius/issues/11331), [#11310](https://github.com/radius-project/radius/issues/11310)) | Stakeholder comms | M |
+| 10 | J6 | E2E tests for automatically registered resource types ([#11216](https://github.com/radius-project/radius/issues/11216)) | Owned by Lakshmi; depends on J2 | M |
+| 11 | J7 + J8 | Investigate auto-publishing Bicep extensions for core types ([#11255](https://github.com/radius-project/radius/issues/11255)); migration docs and community contribution guide ([#9836](https://github.com/radius-project/radius/issues/9836)) | Owned by Lakshmi | M |
+| 12 | K1 (production) | **GoReleaser production release** — first official tagged release using GoReleaser; sign-off from release engineer (Dariusz) | Owned by Dariusz; replaces legacy release scripts in production | M |
+| 13 | K2 (Phase 2) | Enable linting CI enforcement ([#10829](https://github.com/radius-project/radius/issues/10829)) — gate PRs on linting failures after Phase 1 profiling in Sprint 3 | Owned by Dariusz | S |
+| 14 | K5 | Implement repository engagement and review metrics dashboard ([#10853](https://github.com/radius-project/radius/issues/10853)) | Owned by Dariusz | M |
 
 #### Exit criteria — Sprint 5
 
@@ -362,6 +422,11 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 - [ ] **Encryption stack:** `bicepSettings` and `terraformSettings` secrets are encrypted at rest using the agreed-upon encryption provider; no plaintext secrets in state store
 - [ ] **Network policies:** Kubernetes NetworkPolicies for UCP and Radius components are defined in Helm chart and tested in a functional environment
 - [ ] **Architecture docs:** Agentic workflow PR is open and demonstrated with at least one auto-updated architecture document
+- [ ] **Extensibility E2E:** All automatically registered RRT resource types pass an end-to-end test that creates, reads, updates, and deletes a resource through the full stack
+- [ ] **Community contribution path:** Migration docs and recipe contribution guide published; at least one example recipe PR goes through the documented process
+- [ ] **GoReleaser production release:** First official Radius release produced entirely by GoReleaser; checksums, multi-arch images, and GitHub Release created from a single tag push; legacy scripts removed
+- [ ] **Linting CI enforcement:** All linting checks gate PRs; `make lint` passes with zero errors on the current codebase
+- [ ] **Metrics dashboard:** Repository engagement dashboard is live and surfacing first-responder and review-time data to maintainers
 - [ ] **Demo:** Recorded demo (video or screenshot walkthrough) covers the full Repo Radius + App Graph user journey and is linked from the repository README
 
 ---
@@ -453,6 +518,28 @@ Supporting work spans security hardening (OIDC, encryption, SBOM), CLI backwards
 
 ---
 
+### Risk 8 — Extensibility RRT Migration Breaks Existing Apps
+
+| Field | Detail |
+|---|---|
+| **Issue** | [#9829](https://github.com/radius-project/radius/issues/9829), [#9830](https://github.com/radius-project/radius/issues/9830), [#9836](https://github.com/radius-project/radius/issues/9836) |
+| **Impact** | If the new `Applications.Core/<type>@<preview-version>` RRTs are not backward-compatible, existing user `app.bicep` files break silently |
+| **Probability** | Medium (new API versions are intentionally additive, but recipes introduce new semantics) |
+| **Mitigation** | Keep old hard-coded types fully functional in parallel with new RRTs (see Non-goals in design). New types gated behind `--preview`. Publish a migration guide (J8) before any deprecation of the old types. |
+| **Contingency** | If community feedback shows adoption friction, extend the dual-type period and delay old-type deprecation beyond Sprint 5. |
+
+---
+
+### Risk 9 — GoReleaser Migration Disrupts Release Cadence
+
+| Field | Detail |
+|---|---|
+| **Issue** | [design-notes/tools/2026-03-goreleaser-release-lifecycle.md](https://github.com/radius-project/design-notes/blob/main/tools/2026-03-goreleaser-release-lifecycle.md) |
+| **Impact** | A broken GoReleaser configuration can prevent a timely release; legacy scripts removed too early leave no fallback |
+| **Probability** | Low-medium (design is thorough; snapshot builds validate config before production) |
+| **Mitigation** | Run GoReleaser in snapshot mode in CI from Sprint 2 onward. Keep legacy scripts in place (but untriggered) until first successful GoReleaser production release in Sprint 5. Dariusz is DRI and signs off on production readiness. |
+| **Contingency** | Fall back to legacy scripts for any in-flight release if GoReleaser production mode has an issue; post-mortem and fix before next release. |
+
 ## 6. Progress Tracking
 
 ### Sprint board
@@ -467,11 +554,11 @@ Each sprint's committed work items map to issues in `radius-project/radius`. Tra
 
 | Sprint | Slices | Key issue numbers |
 |---|---|---|
-| Sprint 1 | A1, A2, F1, F6, B1, B6, H1, C0, G2, B5, H2(start) | #11318, #11308, #11492, #11258, #11637, #11486, #11482, #11319, #11306, #11488, #11425 |
-| Sprint 2 | A3a, A3b, A4, B2, B4, F2, G3, H5, H6, H2(cont.) | #11604, #11605, #11606, #11490, #11489, #11654, #11354, #11320, #11321, #11425 |
-| Sprint 3 | C1, C2, C4, C5, B3, C6, A6, F8, H2(done) | #11309, #11583, #11581, #11582, #11677, #208, #11493, #11307, #11574, #11425 |
-| Sprint 4 | C3, D1, D2, D3, D4, D5, D6, H3 | #11584, #11653, #11652, #11577, #11580, #11660, #11657, #11487 |
-| Sprint 5 | E1, E2, A5, F3, F4, F5, F7, H4, I1/I2 | #11655, #11659, #11367, #11446, #11273, #11271, #11095, #11424, #11331, #11310 |
+| Sprint 1 | A1, A2, F1, F6, B1, B6, H1, C0, G2, B5, H2(start), K1(spike), K4 | #11318, #11308, #11492, #11258, #11637, #11486, #11482, #11319, #11306, #11488, #11425, #10843 |
+| Sprint 2 | A3a, A3b, A4, B2, B4, F2, G3, H5, H6, H2(cont.), K1(impl), J1(start) | #11604, #11605, #11606, #11490, #11489, #11654, #11354, #11320, #11321, #11425, #9829 |
+| Sprint 3 | C1, C2, C4, C5, B3, C6, A6, F8, H2(done), J1(cont.)+J2(start), K2(P1) | #11309, #11583, #11581, #11582, #11677, #208, #11493, #11307, #11574, #11425, #9830, #10829 |
+| Sprint 4 | C3, D1, D2, D3, D4, D5, D6, H3, J3, J4, K3 | #11584, #11653, #11652, #11577, #11580, #11660, #11657, #11487, #9831, #9921, #10830 |
+| Sprint 5 | E1, E2, A5, F3, F4, F5, F7, H4, I1/I2, J6, J7+J8, K1(prod), K2(P2), K5 | #11655, #11659, #11367, #11446, #11273, #11271, #11095, #11424, #11331, #11310, #11216, #11255, #9836, #10853, #10829 |
 
 ### Definition of a "closed" issue (for this plan)
 
@@ -498,8 +585,8 @@ The following open issues from Project 23 are acknowledged but not scheduled in 
 | [#11217](https://github.com/radius-project/radius/issues/11217) | Cosmetic bug: confusing error in `rad app list` | Low priority; can be batched |
 | [#11218](https://github.com/radius-project/radius/issues/11218) | `rad upgrade kubernetes` resets to chart defaults | Medium priority; no Sprint 1–5 dependency |
 | [#11147](https://github.com/radius-project/radius/issues/11147) | Add `--force` to `rad resource delete` | Good DX improvement; low urgency |
-| [#11108](https://github.com/radius-project/radius/issues/11108) | Automatically sync core resource manifests | Automation; deferred until after configuration lifecycle is stable |
-| [#9830](https://github.com/radius-project/radius/issues/9830) | Integrate new core RRTs into Radius | Depends on #11317 prototype | 
+| [#11108](https://github.com/radius-project/radius/issues/11108) | Automatically sync core resource manifests (J5) | Automation; deferred until after J2 (new environment API) stabilizes |
+| [#10384](https://github.com/radius-project/radius/issues/10384) | Remove `experimentalFeaturesEnabled` for extensibility (J9) | Low friction; defer until RRT adoption grows |
 | [#11253](https://github.com/radius-project/radius/issues/11253) | Shared PVC for Terraform storage across RPs | Infrastructure; needs capacity after Sprint 5 |
 | [#11252](https://github.com/radius-project/radius/issues/11252) | Fix TerraformResource deployment + private module deployment | Bug; triage for Sprint 6 |
 | [#11292](https://github.com/radius-project/radius/issues/11292) | Insufficient permissions on dynamic-rp SA for Dapr Terraform Recipe | Bug; triage for Sprint 6 |
@@ -507,5 +594,5 @@ The following open issues from Project 23 are acknowledged but not scheduled in 
 
 ---
 
-*Last updated: 2026-04-17*  
+*Last updated: 2026-04-17 (rev 2 — added Epic J: Compute Extensibility and Epic K: Engineering Excellence per team feedback)*  
 *Maintainer: planning tracked in [nicolejms/radius](https://github.com/nicolejms/radius) — please open issues or PRs there for corrections.*
